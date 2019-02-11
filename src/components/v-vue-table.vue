@@ -69,7 +69,6 @@
         <td
           v-for="(header, headerKey) in variableHeaders"
           :key="`2${headerKey}`"
-          v-html="item[header.id].text"
           :style="{
             'text-align': item[header.id].align ? item[header.id].align : 'left',
           }"
@@ -78,6 +77,14 @@
             toShow: colSelectionMode && !header.toHide,
           }"
         >
+          <span v-if="disableHTML">
+            {{ removeHTML(item[header.id].text) }}
+          </span>
+          <span
+            v-else
+            v-html="item[header.id].text"
+          >
+          </span>
         </td>
       </slot>
     </tr>
@@ -186,6 +193,10 @@
       cookieIdentifier: {
         type: String,
         default: 'vVueTable-cookie-hide',
+      },
+      disableHTML: {
+        type: Boolean,
+        default: false,
       },
       text: {
         type: Object,
