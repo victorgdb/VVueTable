@@ -69,6 +69,7 @@
         <td
           v-for="(header, headerKey) in variableHeaders"
           :key="`2${headerKey}`"
+          v-if="item[header.id]"
           :style="{
             'text-align': item[header.id] && item[header.id].align ? item[header.id].align : 'left',
           }"
