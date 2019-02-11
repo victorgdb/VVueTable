@@ -70,7 +70,7 @@
           v-for="(header, headerKey) in variableHeaders"
           :key="`2${headerKey}`"
           :style="{
-            'text-align': item[header.id].align ? item[header.id].align : 'left',
+            'text-align': item[header.id] && item[header.id].align ? item[header.id].align : 'left',
           }"
           :class="{
             toHide: colSelectionMode && header.toHide,
