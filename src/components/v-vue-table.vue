@@ -78,7 +78,7 @@
           }"
         >
           <span v-if="disableHTML">
-            {{ removeHTML(item[header.id].text) }}
+            {{ item[header.id].text | removeHTML }}
           </span>
           <span
             v-else
@@ -389,6 +389,11 @@
         }
       },
     },
+    filters:{
+      removeHTML(content) {
+          return content.replace(/(<([^>]+)>)/ig,''); // Remove HTML tags
+      }
+    }
   };
 </script>
 
