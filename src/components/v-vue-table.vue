@@ -25,7 +25,7 @@
           toHide: colSelectionMode && header.toHide,
           toShow: colSelectionMode && !header.toHide,
         }"
-            :style="{
+        :style="{
           'text-align': header.align ? header.align : 'left',
         }"
         @click="sortColumn(header.id)"
@@ -77,7 +77,7 @@
             toShow: colSelectionMode && !header.toHide,
           }"
         >
-          <span v-if="disableHTML">
+          <span v-if="disableHtml">
             {{ item[header.id].text | removeHTML }}
           </span>
           <span
@@ -194,7 +194,7 @@
         type: String,
         default: 'vVueTable-cookie-hide',
       },
-      disableHTML: {
+      disableHtml: {
         type: Boolean,
         default: false,
       },
