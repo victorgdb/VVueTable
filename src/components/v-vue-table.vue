@@ -3,16 +3,6 @@
     table: true,
     scrollable: height !== 'auto' && filteredItems.length > 0
   }">
-    <colgroup>
-      <col
-        v-for="(header, index) in variableHeaders"
-        :key="`col${index}`"
-        :class="{
-          toHide: colSelectionMode && header.toHide,
-          toShow: colSelectionMode && !header.toHide,
-        }"
-      />
-    </colgroup>
     <thead class="sorting">
     <draggable v-model="variableHeaders" element="tr" @update="saveHeadersToCookie">
       <th
@@ -41,6 +31,7 @@
         v-for="(header, headerKey) in variableHeaders"
         :class="{
           toHide: colSelectionMode && header.toHide,
+          toShow: colSelectionMode && !header.toHide,
         }"
         :key="`filter${headerKey}`"
       >
@@ -65,19 +56,19 @@
       v-for="(item, key) in filteredItems"
       :key="`item${key}`"
     >
-      <slot :item="item">
-        <td
-          v-for="(header, headerKey) in variableHeaders"
-          :key="`2${headerKey}`"
-          v-if="item[header.id]"
-          :style="{
-            'text-align': item[header.id] && item[header.id].align ? item[header.id].align : 'left',
-          }"
-          :class="{
-            toHide: colSelectionMode && header.toHide,
-            toShow: colSelectionMode && !header.toHide,
-          }"
-        >
+      <td
+        v-for="(header, headerKey) in variableHeaders"
+        :key="`2${headerKey}`"
+        v-if="item[header.id]"
+        :class="{
+          toHide: colSelectionMode && header.toHide,
+          toShow: colSelectionMode && !header.toHide,
+        }"
+        :style="{
+          'text-align': item[header.id] && item[header.id].align ? item[header.id].align : 'left',
+        }"
+      >
+        <slot :header="header" :item="item">
           <span v-if="disableHtml">
             {{ item[header.id].text | removeHTML }}
           </span>
@@ -86,12 +77,12 @@
             v-html="item[header.id].text"
           >
           </span>
-        </td>
-      </slot>
+        </slot>
+      </td>
     </tr>
     </tbody>
-    <tfoot>
-    <tr v-if="colSelectionMode">
+    <tfoot v-if="enableFooter">
+    <tr v-show="colSelectionMode">
       <td
         v-for="(header, headerKey) in variableHeaders"
         :key="`colSelection${headerKey}`"
@@ -103,7 +94,8 @@
             toHide: colSelectionMode && header.toHide,
             'colSelectButtons': true
           }"
-          @click="$set(variableHeaders[headerKey], 'toHide', !header.toHide)"
+          :id="`colSelectionButton${headerKey}`"
+          @click="toggleHeaderDisplay(header, headerKey)"
         >
           <i class="fa fa-check"></i>
           <template v-if="header.toHide === true">
@@ -151,7 +143,7 @@
 
 
         <span class="align-right"
-          v-if="filteredItems.length === items.length"
+              v-if="filteredItems.length === items.length"
         >
           {{ computedText.footerCount }}
         </span>
@@ -199,6 +191,10 @@
         type: Boolean,
         default: false,
       },
+      enableFooter: {
+        type: Boolean,
+        default: false,
+      },
       text: {
         type: Object,
         default: () => {
@@ -241,7 +237,7 @@
         Object.keys(this.pagination.textFilters).forEach(headerId => {
           const searchTerm = this.pagination.textFilters[headerId].toLowerCase();
           if (searchTerm.length > 0) {
-              // Make sure we work with strings
+            // Make sure we work with strings
             items = items.filter(item => `${item[headerId].text}`.toLowerCase().indexOf(searchTerm) === 0);
           }
         });
@@ -258,54 +254,48 @@
       },
     },
     watch: {
-      filteredItems() {
-        this.totalFilteredItems = this.filteredItems.length;
-        this.totalItems = this.items.length;
-      },
-      headers() {
-        this.variableHeaders = [];
-        this.updateHeaders();
-      }
+
     },
     mounted() {
     },
     created() {
       this.updateHeaders();
     },
+    updated() {
+    },
     methods: {
       updateHeaders() {
-          const newVariableHeaders = [];
-          const addedIds = [];
+        const newVariableHeaders = [];
+        const addedIds = [];
+        // Variable headers that are currently displayed are treated first (for the order)
+        // All hidden headers come after, no matter what
+        if (this.variableHeaders.length === 0
+          && this.headers.length > 0
+          && this.$cookie.get(this.cookieIdentifier)
+        ) {
+          const cookieData = JSON.parse(this.$cookie.get(this.cookieIdentifier));
 
-          // Variable headers that are currently displayed are treated first (for the order)
-          // All hidden headers come after, no matter what
-          if (this.variableHeaders.length === 0
-            && this.headers.length > 0
-            && this.$cookie.get(this.cookieIdentifier)
-          ) {
-            const cookieData = JSON.parse(this.$cookie.get(this.cookieIdentifier));
+          cookieData.forEach((data) => {
+            const header = this.headers.find(header => header.id === data.id);
 
-            cookieData.forEach((data) => {
-              const header = this.headers.find(header => header.id === data.id);
+            if (header) {
+              header.hidden = !!data.hidden; // !! is not an error
+              header.toHide = header.hidden;
 
-              if (header) {
-                header.hidden = !!data.hidden; // !! is not an error
-                header.toHide = header.hidden;
-
-                if (!header.hidden) { // Add to the stack only if they are displayed
-                  newVariableHeaders.push(header);
-                  addedIds.push(header.id);
-                }
-              }
-            });
-          } else {
-            this.variableHeaders.forEach((header) => { // Could be read as "currently displayed"
-              if (this.colSelectionMode || !header.hidden) {
+              if (!header.hidden) { // Add to the stack only if they are displayed
                 newVariableHeaders.push(header);
                 addedIds.push(header.id);
               }
-            });
-          }
+            }
+          });
+        } else {
+          this.variableHeaders.forEach((header) => { // Could be read as "currently displayed"
+            if (this.colSelectionMode || !header.hidden) {
+              newVariableHeaders.push(header);
+              addedIds.push(header.id);
+            }
+          });
+        }
 
         // Could be read as "currently not displayed"
         this.headers.forEach((header) => {
@@ -343,6 +333,10 @@
         this.colSelectionMode = false;
         this.updateHeaders();
         this.saveHeadersToCookie();
+      },
+      toggleHeaderDisplay(header, headerKey) {
+        header.toHide = !header.toHide;
+        this.$set(this.variableHeaders, headerKey, header);
       },
       saveHeadersToCookie() {
         const cookieToSave = [];
@@ -392,7 +386,7 @@
     },
     filters:{
       removeHTML(content) {
-          return content.replace(/(<([^>]+)>)/ig,''); // Remove HTML tags
+        return content.replace(/(<([^>]+)>)/ig,''); // Remove HTML tags
       }
     }
   };
@@ -468,7 +462,7 @@
     overflow:auto;
     width:100%;
   }
-  .scrollable thead tr, .scrollable tbody tr{
+  .scrollable thead tr, .scrollable tbody tr, tfoot tr{
     display:table;
     width:100%;
     table-layout:fixed;/* even columns width , fix width of table too*/
@@ -535,6 +529,7 @@
 
   td.toHide, th.toHide, input.toHide::placeholder{
     color:#c2cfd6;
+    background-color:white;
   }
 
   .textFilter td.toHide {
