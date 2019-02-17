@@ -159,228 +159,228 @@
 </template>
 
 <script>
-    import draggable from 'vuedraggable'
-    export default {
-        components: {
-            draggable
+  import draggable from 'vuedraggable'
+  export default {
+    components: {
+      draggable
+    },
+    props: {
+      items: {
+        type: Array,
+        default: () => [],
+      },
+      headers: {
+        type: Array,
+        default: () => [],
+      },
+      sort: {
+        type: Boolean,
+        default: true,
+      },
+      textFilter: {
+        type: Boolean,
+        default: false,
+      },
+      height: {
+        type: String,
+        default: 'auto',
+      },
+      cookieIdentifier: {
+        type: String,
+        default: 'vVueTable-cookie-hide',
+      },
+      disableHtml: {
+        type: Boolean,
+        default: false,
+      },
+      enableFooter: {
+        type: Boolean,
+        default: false,
+      },
+      text: {
+        type: Object,
+        default: () => {
+          return {
+            footerCount: '%itemCount% items',
+            filteredFooterCount: '%filteredItemCount%/%itemCount% items',
+            columnSelectionHelp: 'Pick the columns you want to be displayed.',
+            columnSelectionCancelButton: 'Cancel',
+            columnSelectionSaveButton: 'Save',
+            columnSelectionDisplayedButton: 'Displayed',
+            columnSelectionDisplayButton: 'Display',
+          };
+        }
+      },
+    },
+    data() {
+      return {
+        pagination: {
+          sortBy: '',
+          descending: false,
+          textFilters: {
+
+          },
         },
-        props: {
-            items: {
-                type: Array,
-                default: () => [],
-            },
-            headers: {
-                type: Array,
-                default: () => [],
-            },
-            sort: {
-                type: Boolean,
-                default: true,
-            },
-            textFilter: {
-                type: Boolean,
-                default: false,
-            },
-            height: {
-                type: String,
-                default: 'auto',
-            },
-            cookieIdentifier: {
-                type: String,
-                default: 'vVueTable-cookie-hide',
-            },
-            disableHtml: {
-                type: Boolean,
-                default: false,
-            },
-            enableFooter: {
-                type: Boolean,
-                default: false,
-            },
-            text: {
-                type: Object,
-                default: () => {
-                    return {
-                        footerCount: '%itemCount% items',
-                        filteredFooterCount: '%filteredItemCount%/%itemCount% items',
-                        columnSelectionHelp: 'Pick the columns you want to be displayed.',
-                        columnSelectionCancelButton: 'Cancel',
-                        columnSelectionSaveButton: 'Save',
-                        columnSelectionDisplayedButton: 'Displayed',
-                        columnSelectionDisplayButton: 'Display',
-                    };
-                }
-            },
-        },
-        data() {
-            return {
-                pagination: {
-                    sortBy: '',
-                    descending: false,
-                    textFilters: {
+        colSelectionMode: false,
+        totalItems: 0,
+        totalFilteredItems: 0,
+        hidingHeaders: [],
+        hiddenHeaders: [],
+        headerOrder: null,
+        filteredHeaders: [],
+      };
+    },
+    computed: {
+      filteredItems: {
+        get() {
+          let items = this.items;
 
-                    },
-                },
-                colSelectionMode: false,
-                totalItems: 0,
-                totalFilteredItems: 0,
-                hidingHeaders: [],
-                hiddenHeaders: [],
-                headerOrder: null,
-                filteredHeaders: [],
-            };
-        },
-        computed: {
-            filteredItems: {
-                get() {
-                    let items = this.items;
+          // Creating no HTML property for all items, and initializing missing headers
+          items.forEach((anItem) => {
+            this.filteredHeaders.forEach(aHeader => {
+              if (typeof anItem[aHeader.id] === 'undefined') {
+                anItem[aHeader.id] = {};
+                anItem[aHeader.id].text = '';
+                anItem[aHeader.id].withoutHTML = '';
+              } else {
+                this.$set(anItem[aHeader.id], 'withoutHTML', this.removeHTML(anItem[aHeader.id].text));
+              }
+            });
+          });
 
-                    // Creating no HTML property for all items, and initializing missing headers
-                    items.forEach((anItem) => {
-                        this.filteredHeaders.forEach(aHeader => {
-                            if (typeof anItem[aHeader.id] === 'undefined') {
-                                anItem[aHeader.id] = {};
-                                anItem[aHeader.id].text = '';
-                                anItem[aHeader.id].withoutHTML = '';
-                            } else {
-                                this.$set(anItem[aHeader.id], 'withoutHTML', this.removeHTML(anItem[aHeader.id].text));
-                            }
-                        });
-                    });
+          if (this.pagination.sortBy.length > 0) {
+            items = items.sort(this.sortFn)
+          }
 
-                    if (this.pagination.sortBy.length > 0) {
-                        items = items.sort(this.sortFn)
-                    }
-
-                    Object.keys(this.pagination.textFilters).forEach(headerId => {
-                        const searchTerm = this.pagination.textFilters[headerId].toLowerCase();
-                        if (searchTerm.length > 0) {
-                            // Make sure we work with strings
-                            items = items.filter((item) => {
-                                return item[headerId].withoutHTML.toLowerCase().indexOf(searchTerm) === 0;
-                            });
-                        }
-                    });
-                    return items;
-                }
-            },
-            computedText() {
-                const toReturn = {};
-                Object.keys(this.text).forEach((key) => {
-                    toReturn[key] = this.text[key];
-                    toReturn[key] = toReturn[key].replace('%filteredItemCount%', this.filteredItems.length);
-                    toReturn[key] = toReturn[key].replace('%itemCount%', this.items.length);
-                });
-                return toReturn;
-            },
-            displayedHeaders() {
-                return this.headers.filter((aHeader) => {
-                    return this.colSelectionMode || !this.hiddenHeaders.includes(aHeader.id);
-                });
+          Object.keys(this.pagination.textFilters).forEach(headerId => {
+            const searchTerm = this.pagination.textFilters[headerId].toLowerCase();
+            if (searchTerm.length > 0) {
+              // Make sure we work with strings
+              items = items.filter((item) => {
+                return item[headerId].withoutHTML.toLowerCase().indexOf(searchTerm) === 0;
+              });
             }
-        },
-        watch: {
-            displayedHeaders() {
-                this.updateFilteredHeaders();
-            }
-        },
-        mounted() {
-        },
-        created() {
-            this.hiddenHeaders = JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-hidden`)) || [];
-            this.headerOrder = JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-order`)) || [];
-        },
-        updated() {
-        },
-        methods: {
-            updateFilteredHeaders() {
-                this.filteredHeaders = [];
-                const addedIds = [];
+          });
+          return items;
+        }
+      },
+      computedText() {
+        const toReturn = {};
+        Object.keys(this.text).forEach((key) => {
+          toReturn[key] = this.text[key];
+          toReturn[key] = toReturn[key].replace('%filteredItemCount%', this.filteredItems.length);
+          toReturn[key] = toReturn[key].replace('%itemCount%', this.items.length);
+        });
+        return toReturn;
+      },
+      displayedHeaders() {
+        return this.headers.filter((aHeader) => {
+          return this.colSelectionMode || !this.hiddenHeaders.includes(aHeader.id);
+        });
+      }
+    },
+    watch: {
+      displayedHeaders() {
+        this.updateFilteredHeaders();
+      }
+    },
+    mounted() {
+    },
+    created() {
+      this.hiddenHeaders = JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-hidden`)) || [];
+      this.headerOrder = JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-order`)) || [];
+    },
+    updated() {
+    },
+    methods: {
+      updateFilteredHeaders() {
+        this.filteredHeaders = [];
+        const addedIds = [];
 
-                // Filling ranked header first
-                this.headerOrder.forEach((headerId) => {
-                    const header = this.displayedHeaders.find(header => header.id === headerId);
-                    if (header) {
-                        addedIds.push(headerId);
-                        this.filteredHeaders.push(header);
-                    }
-                });
+        // Filling ranked header first
+        this.headerOrder.forEach((headerId) => {
+          const header = this.displayedHeaders.find(header => header.id === headerId);
+          if (header) {
+            addedIds.push(headerId);
+            this.filteredHeaders.push(header);
+          }
+        });
 
-                // filling the rest AFTER the ranked ones
-                this.displayedHeaders.forEach((header) => {
-                    if (!addedIds.includes(header.id)) {
-                        this.filteredHeaders.push(header);
-                    }
-                })
-            },
-            sortColumn(columnId) {
-                if (this.pagination.sortBy === columnId) {
-                    // Same column, we invert sortering
-                    this.pagination.descending = !this.pagination.descending;
-                } else {
-                    this.pagination.sortBy = columnId;
-                    this.pagination.descending = false;
-                }
-            },
-            selectColumns() {
-                this.colSelectionMode = true;
-                this.hidingHeaders = [...this.hiddenHeaders];
-            },
-            cancelColumnSelection() {
-                this.colSelectionMode = false;
-            },
-            validateColumnSelection() {
-                this.hiddenHeaders =  [...this.hidingHeaders];
+        // filling the rest AFTER the ranked ones
+        this.displayedHeaders.forEach((header) => {
+          if (!addedIds.includes(header.id)) {
+            this.filteredHeaders.push(header);
+          }
+        })
+      },
+      sortColumn(columnId) {
+        if (this.pagination.sortBy === columnId) {
+          // Same column, we invert sortering
+          this.pagination.descending = !this.pagination.descending;
+        } else {
+          this.pagination.sortBy = columnId;
+          this.pagination.descending = false;
+        }
+      },
+      selectColumns() {
+        this.colSelectionMode = true;
+        this.hidingHeaders = [...this.hiddenHeaders];
+      },
+      cancelColumnSelection() {
+        this.colSelectionMode = false;
+      },
+      validateColumnSelection() {
+        this.hiddenHeaders =  [...this.hidingHeaders];
 
-                this.colSelectionMode = false;
-                this.saveHeadersDisplayToCookie();
-            },
-            toggleHeaderDisplay(headerId) {
-                if (this.hidingHeaders.includes(headerId)) {
-                    // We remove this item from the stack
-                    this.$delete(this.hidingHeaders, this.hidingHeaders.findIndex(hidingHeader => hidingHeader === headerId));
-                } else {
-                    // We add it
-                    this.hidingHeaders.push(headerId);
-                }
-            },
-            saveHeadersDisplayToCookie() {
-                this.$cookie.set(`${this.cookieIdentifier}-hidden`, JSON.stringify(this.hiddenHeaders), Infinity);
-            },
-            saveHeadersOrderToCookie() {
-                this.headerOrder = [];
+        this.colSelectionMode = false;
+        this.saveHeadersDisplayToCookie();
+      },
+      toggleHeaderDisplay(headerId) {
+        if (this.hidingHeaders.includes(headerId)) {
+          // We remove this item from the stack
+          this.$delete(this.hidingHeaders, this.hidingHeaders.findIndex(hidingHeader => hidingHeader === headerId));
+        } else {
+          // We add it
+          this.hidingHeaders.push(headerId);
+        }
+      },
+      saveHeadersDisplayToCookie() {
+        this.$cookie.set(`${this.cookieIdentifier}-hidden`, JSON.stringify(this.hiddenHeaders), Infinity);
+      },
+      saveHeadersOrderToCookie() {
+        this.headerOrder = [];
 
-                this.filteredHeaders.forEach((aHeader) => {
-                    this.headerOrder.push(aHeader.id)
-                });
+        this.filteredHeaders.forEach((aHeader) => {
+          this.headerOrder.push(aHeader.id)
+        });
 
-                this.$cookie.set(`${this.cookieIdentifier}-order`, JSON.stringify(this.headerOrder), Infinity);
-            },
-            sortFn (a, b) {
-                let aValue, bValue;
+        this.$cookie.set(`${this.cookieIdentifier}-order`, JSON.stringify(this.headerOrder), Infinity);
+      },
+      sortFn (a, b) {
+        let aValue, bValue;
 
-                if (this.pagination.descending) {
-                    aValue = a[this.pagination.sortBy].withoutHTML;
-                    bValue = b[this.pagination.sortBy].withoutHTML;
-                } else {
-                    aValue = b[this.pagination.sortBy].withoutHTML;
-                    bValue = a[this.pagination.sortBy].withoutHTML;
-                }
+        if (this.pagination.descending) {
+          aValue = a[this.pagination.sortBy].withoutHTML;
+          bValue = b[this.pagination.sortBy].withoutHTML;
+        } else {
+          aValue = b[this.pagination.sortBy].withoutHTML;
+          bValue = a[this.pagination.sortBy].withoutHTML;
+        }
 
-                // If we are sorting text
-                if (isNaN(aValue) || isNaN(bValue)) {
-                    if (aValue > bValue) return 1;
-                    if (aValue < bValue) return -1;
-                    return 0;
-                } else {
-                    return aValue - bValue;
-                }
-            },
-            removeHTML(content) {
-                return content.replace(/(<([^>]+)>)/ig,''); // Remove HTML tags
-            }
-        },
-    };
+        // If we are sorting text
+        if (isNaN(aValue) || isNaN(bValue)) {
+          if (aValue > bValue) return 1;
+          if (aValue < bValue) return -1;
+          return 0;
+        } else {
+          return aValue - bValue;
+        }
+      },
+      removeHTML(content) {
+        return content.replace(/(<([^>]+)>)/ig,''); // Remove HTML tags
+      }
+    },
+  };
 </script>
 
 <style scoped>
