@@ -59,7 +59,6 @@
       <td
         v-for="(header, headerKey) in filteredHeaders"
         :key="`2${headerKey}`"
-        v-if="item[header.id]"
         :class="{
           toHide: colSelectionMode && hidingHeaders.includes(header.id),
           toShow: colSelectionMode && !hidingHeaders.includes(header.id),
@@ -377,7 +376,7 @@
         }
       },
       removeHTML(content) {
-        return content.replace(/(<([^>]+)>)/ig,''); // Remove HTML tags
+        return `${content}`.replace(/(<([^>]+)>)/ig,''); // Remove HTML tags
       }
     },
   };
@@ -406,7 +405,7 @@
   }
 
   thead {
-    border-bottom: 2px solid darkgrey;
+    border-bottom: 2px solid lightgrey;
   }
   .table td {
     border-top: 1px solid #c2cfd6;
@@ -436,9 +435,6 @@
   .table thead .sorting.asc:after {
     content: "\f0dd";
     color:black;
-  }
-  tr.textFilter td {
-    border-top: 2px solid darkgrey;
   }
   tr.textFilter input {
     width: 100%;
