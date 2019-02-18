@@ -247,6 +247,13 @@
                 itemToAdd[aHeader.id].withoutHTML = this.removeHTML(anItem[aHeader.id].text);
               }
             });
+
+            // Make sure all provided variables are kept (for slots)
+            Object.keys(anItem).forEach((key) => {
+              if (typeof itemToAdd[key] === 'undefined') {
+                itemToAdd[key] = anItem[key];
+              }
+            });
             items.push(itemToAdd);
           });
 
