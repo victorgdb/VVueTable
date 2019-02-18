@@ -68,7 +68,7 @@
         }"
       >
         <div class="tdContent">
-          <slot :text="item[header.id].text" :withoutHTML="item[header.id].withoutHTML">
+          <slot :header="header" :text="item[header.id].text" :withoutHTML="item[header.id].withoutHTML">
             <span v-if="disableHtml">
               {{ item[header.id].withoutHTML }}
             </span>
