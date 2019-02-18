@@ -247,6 +247,7 @@
                 itemToAdd[aHeader.id].withoutHTML = this.removeHTML(anItem[aHeader.id].text);
               }
             });
+            items.push(itemToAdd);
           });
 
           if (this.pagination.sortBy.length > 0) {
