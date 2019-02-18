@@ -291,9 +291,14 @@
     watch: {
       displayedHeaders() {
         this.updateFilteredHeaders();
+      },
+      cookieIdentifier() {
+        this.hiddenHeaders = JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-hidden`)) || [];
+        this.headerOrder = JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-order`)) || [];
       }
     },
     mounted() {
+      console.log('lili')
     },
     created() {
       this.hiddenHeaders = JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-hidden`)) || [];
