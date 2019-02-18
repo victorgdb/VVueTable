@@ -224,8 +224,8 @@
         totalItems: 0,
         totalFilteredItems: 0,
         hidingHeaders: [],
-        hiddenHeaders: [],
-        headerOrder: null,
+        hiddenHeadersBuffer: null,
+        headerOrderBuffer: null,
         filteredHeaders: [],
       };
     },
@@ -286,23 +286,41 @@
         return this.headers.filter((aHeader) => {
           return this.colSelectionMode || !this.hiddenHeaders.includes(aHeader.id);
         });
-      }
+      },
+      headerOrder: {
+        get() {
+          if (!this.headerOrderBuffer) {
+            return JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-order`)) || [];
+          }
+          return this.headerOrderBuffer;
+        },
+        set(val) {
+          this.headerOrderBuffer = val;
+          this.$cookie.set(`${this.cookieIdentifier}-order`, JSON.stringify(val), Infinity);
+        }
+      },
+      hiddenHeaders: {
+        get() {
+          if (!this.hiddenHeadersBuffer) {
+            return JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-hidden`)) || [];
+          }
+          return this.hiddenHeadersBuffer;
+        },
+        set(val) {
+          this.hiddenHeadersBuffer = val;
+          this.$cookie.set(`${this.cookieIdentifier}-hidden`, JSON.stringify(val), Infinity);
+        },
+      },
     },
     watch: {
       displayedHeaders() {
         this.updateFilteredHeaders();
       },
-      cookieIdentifier() {
-        this.hiddenHeaders = JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-hidden`)) || [];
-        this.headerOrder = JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-order`)) || [];
-      }
     },
     mounted() {
-      console.log('lili')
+
     },
     created() {
-      this.hiddenHeaders = JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-hidden`)) || [];
-      this.headerOrder = JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-order`)) || [];
     },
     updated() {
     },
@@ -314,12 +332,11 @@
         // Filling ranked header first
         this.headerOrder.forEach((headerId) => {
           const header = this.displayedHeaders.find(header => header.id === headerId);
-          if (header) {
+          if (header && !addedIds.includes(headerId)) {
             addedIds.push(headerId);
             this.filteredHeaders.push(header);
           }
         });
-
         // filling the rest AFTER the ranked ones
         this.displayedHeaders.forEach((header) => {
           if (!addedIds.includes(header.id)) {
@@ -347,7 +364,6 @@
         this.hiddenHeaders =  [...this.hidingHeaders];
 
         this.colSelectionMode = false;
-        this.saveHeadersDisplayToCookie();
       },
       toggleHeaderDisplay(headerId) {
         if (this.hidingHeaders.includes(headerId)) {
@@ -358,17 +374,10 @@
           this.hidingHeaders.push(headerId);
         }
       },
-      saveHeadersDisplayToCookie() {
-        this.$cookie.set(`${this.cookieIdentifier}-hidden`, JSON.stringify(this.hiddenHeaders), Infinity);
-      },
       saveHeadersOrderToCookie() {
-        this.headerOrder = [];
-
-        this.filteredHeaders.forEach((aHeader) => {
-          this.headerOrder.push(aHeader.id)
+        this.headerOrder = this.filteredHeaders.map((header) => {
+          return header.id;
         });
-
-        this.$cookie.set(`${this.cookieIdentifier}-order`, JSON.stringify(this.headerOrder), Infinity);
       },
       sortFn (a, b) {
         let aValue, bValue;
