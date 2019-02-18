@@ -68,7 +68,7 @@
         }"
       >
         <div class="tdContent">
-          <slot :header="header" :item="item" :removeHTML="removeHTML">
+          <slot :text="item[header.id].text" :withoutHTML="item[header.id].withoutHTML">
             <span v-if="disableHtml">
               {{ item[header.id].withoutHTML }}
             </span>
@@ -232,17 +232,19 @@
     computed: {
       filteredItems: {
         get() {
-          let items = this.items;
+          let items = [];
 
           // Creating no HTML property for all items, and initializing missing headers
-          items.forEach((anItem) => {
+          this.items.forEach((anItem) => {
+            const itemToAdd = {};
             this.filteredHeaders.forEach(aHeader => {
+              itemToAdd[aHeader.id] = {};
               if (typeof anItem[aHeader.id] === 'undefined') {
-                anItem[aHeader.id] = {};
-                anItem[aHeader.id].text = '';
-                anItem[aHeader.id].withoutHTML = '';
+                itemToAdd[aHeader.id].text = '';
+                itemToAdd[aHeader.id].withoutHTML = '';
               } else {
-                this.$set(anItem[aHeader.id], 'withoutHTML', this.removeHTML(anItem[aHeader.id].text));
+                itemToAdd[aHeader.id].text = anItem[aHeader.id].text;
+                itemToAdd[aHeader.id].withoutHTML = this.removeHTML(anItem[aHeader.id].text);
               }
             });
           });
