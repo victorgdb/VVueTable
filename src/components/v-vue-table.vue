@@ -321,6 +321,7 @@
 
     },
     created() {
+      this.updateFilteredHeaders();
     },
     updated() {
     },
