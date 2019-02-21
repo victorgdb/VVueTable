@@ -19,6 +19,7 @@
           'text-align': header.align ? header.align : 'left',
         }"
         @click="sortColumn(header.id)"
+        :title="header.text"
       >
         <span v-html="header.text"></span>
       </th>
@@ -482,6 +483,11 @@
     display:table;
     width:100%;
     table-layout:fixed;/* even columns width , fix width of table too*/
+  }
+
+  .scrollable th {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .align-right {
     float: right;
