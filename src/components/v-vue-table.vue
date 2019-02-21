@@ -43,6 +43,7 @@
             toHide: colSelectionMode && hidingHeaders.includes(header.id),
             toShow: colSelectionMode && !hidingHeaders.includes(header.id),
           }"
+          v-if="header.textFilterString !== false"
           v-model="pagination.textFilters[header.id]"
         />
       </td>
