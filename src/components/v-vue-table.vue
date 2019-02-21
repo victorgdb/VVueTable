@@ -68,6 +68,7 @@
         :style="{
           'text-align': item[header.id] && item[header.id].align ? item[header.id].align : 'left',
         }"
+        :title="item[header.id].text"
       >
         <div class="tdContent">
           <slot :header="header" :item="item" :text="item[header.id].text" :withoutHTML="item[header.id].withoutHTML">
