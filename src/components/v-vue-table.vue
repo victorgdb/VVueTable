@@ -3,7 +3,7 @@
     table: true,
     scrollable: height !== 'auto' && filteredItems.length > 0
   }">
-    <thead class="sorting">
+    <thead class="sorting" v-if="enableHeaders">
     <draggable element="tr" v-model="filteredHeaders" @update="saveHeadersOrderToCookie">
       <th
         v-for="(header, index) in filteredHeaders"
@@ -198,6 +198,10 @@
       enableFooter: {
         type: Boolean,
         default: false,
+      },
+      enableHeaders: {
+        type: Boolean,
+        default: true,
       },
       text: {
         type: Object,
