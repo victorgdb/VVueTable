@@ -271,9 +271,35 @@
           Object.keys(this.pagination.textFilters).forEach(headerId => {
             const searchTerm = this.pagination.textFilters[headerId].toLowerCase();
             if (searchTerm.length > 0) {
-              // Make sure we work with strings
+              // Do we have a special AND/OR character?
+              const and = searchTerm.split(',').reduce((acc, term) => {
+                if (term.length) acc.push(term);
+                return acc;
+              }, []);
+              const or = searchTerm.split('+').reduce((acc, term) => {
+                if (term.length) acc.push(term);
+                return acc;
+              }, []);
               items = items.filter((item) => {
-                return item[headerId].withoutHTML.toLowerCase().indexOf(searchTerm) === 0;
+                let found = false;
+                if (and.length > 1 && !or.length <= 1) {
+                  found = true;
+                  and.forEach((aTerm) => {
+                    if (item[headerId].withoutHTML.toLowerCase().indexOf(aTerm) === -1) {
+                      found = false;
+                    }
+                  })
+                } else if (or.length > 1 && and.length <= 1) {
+                  found = false;
+                  or.forEach((aTerm) => {
+                    if (item[headerId].withoutHTML.toLowerCase().indexOf(aTerm) !== -1) {
+                      found = true;
+                    }
+                  })
+                } else {
+                  found = item[headerId].withoutHTML.toLowerCase().indexOf(searchTerm) === 0;
+                }
+                return found;
               });
             }
           });
