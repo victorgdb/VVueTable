@@ -276,7 +276,7 @@
                 if (term.length) acc.push(term);
                 return acc;
               }, []);
-              const or = searchTerm.split('+').reduce((acc, term) => {
+              const or = searchTerm.split('/').reduce((acc, term) => {
                 if (term.length) acc.push(term);
                 return acc;
               }, []);
@@ -297,7 +297,7 @@
                     }
                   })
                 } else {
-                  found = item[headerId].withoutHTML.toLowerCase().indexOf(searchTerm) === 0;
+                  found = item[headerId].withoutHTML.toLowerCase().indexOf(searchTerm) === -1;
                 }
                 return found;
               });
