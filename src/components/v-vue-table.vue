@@ -297,7 +297,7 @@
                     }
                   })
                 } else {
-                  found = item[headerId].withoutHTML.toLowerCase().indexOf(searchTerm) === -1;
+                  found = item[headerId].withoutHTML.toLowerCase().indexOf(searchTerm) !== -1;
                 }
                 return found;
               });
