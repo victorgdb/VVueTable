@@ -269,7 +269,7 @@
           }
 
           Object.keys(this.pagination.textFilters).forEach(headerId => {
-            const searchTerm = this.pagination.textFilters[headerId].toLowerCase();
+            const searchTerm = this.removeAccents(this.pagination.textFilters[headerId].toLowerCase());
             if (searchTerm.length > 0) {
               // Do we have a special AND/OR character?
               const and = searchTerm.split(',').reduce((acc, term) => {
@@ -285,19 +285,19 @@
                 if (and.length > 1 && !or.length <= 1) {
                   found = true;
                   and.forEach((aTerm) => {
-                    if (item[headerId].withoutHTML.toLowerCase().indexOf(aTerm) === -1) {
+                    if (this.removeAccents(item[headerId].withoutHTML.toLowerCase()).indexOf(aTerm) === -1) {
                       found = false;
                     }
                   })
                 } else if (or.length > 1 && and.length <= 1) {
                   found = false;
                   or.forEach((aTerm) => {
-                    if (item[headerId].withoutHTML.toLowerCase().indexOf(aTerm) !== -1) {
+                    if (this.removeAccents(item[headerId].withoutHTML.toLowerCase()).indexOf(aTerm) !== -1) {
                       found = true;
                     }
                   })
                 } else {
-                  found = item[headerId].withoutHTML.toLowerCase().indexOf(searchTerm) !== -1;
+                  found = this.removeAccents(item[headerId].withoutHTML.toLowerCase()).indexOf(searchTerm) !== -1;
                 }
                 return found;
               });
@@ -386,6 +386,9 @@
           this.pagination.sortBy = columnId;
           this.pagination.descending = false;
         }
+      },
+      removeAccents(s) {
+        return s.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
       },
       selectColumns() {
         this.colSelectionMode = true;
