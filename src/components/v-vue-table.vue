@@ -272,7 +272,7 @@
         get() {
           if (!this.hiddenHeadersBuffer) {
             let headers =  JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-hidden`));
-            if (!headers) {
+            if (!headers && this.initHeaders.length > 0) {
               headers = this.headers.filter((aHeader) => {
                 return !this.initHeaders.includes(aHeader.id);
               }).map(header => header.id);
