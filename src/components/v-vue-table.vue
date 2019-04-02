@@ -1,163 +1,97 @@
 <template>
-  <table :class="{
+  <div>
+    <slot name="header" :displayed-headers="filteredHeaders" :headers="headers" :selectColumns="selectColumns">
+    </slot>
+    <table :class="{
     table: true,
     scrollable: height !== 'auto' && filteredItems.length > 0
   }">
-    <thead class="sorting" v-if="enableHeaders">
-    <draggable element="tr" v-model="filteredHeaders" @update="saveHeadersOrderToCookie">
-      <th
-        v-for="(header, index) in filteredHeaders"
-        :key="`header${index}`"
-        :class="{
+      <thead class="sorting" v-if="enableHeaders">
+      <draggable tag="tr" v-model="filteredHeaders" @update="saveHeadersOrderToCookie">
+        <th
+          v-for="(header, index) in filteredHeaders"
+          :key="`header${index}`"
+          :class="{
           sorting: sort,
           asc: pagination.sortBy === header.id && !pagination.descending,
           desc: pagination.sortBy === header.id && pagination.descending,
-          toHide: colSelectionMode && hidingHeaders.includes(header.id),
-          toShow: colSelectionMode && !hidingHeaders.includes(header.id),
         }"
-        :style="{
+          :style="{
           'text-align': header.align ? header.align : 'left',
         }"
-        @click="sortColumn(header.id)"
-        :title="header.text"
+          @click="sortColumn(header.id)"
+          :title="header.text"
+        >
+          <span v-html="header.text"></span>
+        </th>
+      </draggable>
+      <tr
+        class="textFilter"
+        v-if="textFilter"
       >
-        <span v-html="header.text"></span>
-      </th>
-    </draggable>
-    <tr
-      class="textFilter"
-      v-if="textFilter"
-    >
-      <td
-        v-for="(header, headerKey) in filteredHeaders"
-        :class="{
-          toHide: colSelectionMode && hidingHeaders.includes(header.id),
-          toShow: colSelectionMode && !hidingHeaders.includes(header.id),
-        }"
-        :key="`filter${headerKey}`"
-      >
-        <input
-          :placeholder="header.textFilterString ? header.textFilterString : `Search ${header.text}`"
-          type="text"
-          :class="{
-            toHide: colSelectionMode && hidingHeaders.includes(header.id),
-            toShow: colSelectionMode && !hidingHeaders.includes(header.id),
-          }"
-          v-if="header.textFilterString !== false"
-          v-model="pagination.textFilters[header.id]"
-        />
-      </td>
-    </tr>
-    </thead>
-    <tbody
-      :style="{
+        <td
+          v-for="(header, headerKey) in filteredHeaders"
+          :key="`filter${headerKey}`"
+        >
+          <input
+            :placeholder="header.textFilterString ? header.textFilterString : `Search ${header.text}`"
+            type="text"
+            v-if="header.textFilterString !== false"
+            v-model="pagination.textFilters[header.id]"
+          />
+        </td>
+      </tr>
+      </thead>
+      <tbody
+        :style="{
         'max-height': filteredItems.length > 0 ? height : 'auto',
       }"
-    >
-    <tr
-      v-for="(item, key) in filteredItems"
-      :key="`item${key}`"
-    >
-      <td
-        v-for="(header, headerKey) in filteredHeaders"
-        :key="`2${headerKey}`"
-        :class="{
-          toHide: colSelectionMode && hidingHeaders.includes(header.id),
-          toShow: colSelectionMode && !hidingHeaders.includes(header.id),
-        }"
-        :style="{
+      >
+      <tr
+        v-for="(item, key) in filteredItems"
+        :key="`item${key}`"
+      >
+        <td
+          v-for="(header, headerKey) in filteredHeaders"
+          :key="`2${headerKey}`"
+          :style="{
           'text-align': item[header.id] && item[header.id].align ? item[header.id].align : 'left',
         }"
-        :title="item[header.id].text"
-      >
-        <div class="tdContent">
-          <slot :header="header" :item="item" :text="item[header.id].text" :withoutHTML="item[header.id].withoutHTML">
+          :title="item[header.id].text"
+        >
+          <div class="tdContent">
+            <slot :header="header" :item="item" :text="item[header.id].text" :withoutHTML="item[header.id].withoutHTML" name="td">
             <span v-if="disableHtml">
               {{ item[header.id].withoutHTML }}
             </span>
-            <span
-              v-else
-              v-html="item[header.id].text"
-            >
+              <span
+                v-else
+                v-html="item[header.id].text"
+              >
             </span>
-          </slot>
-        </div>
-      </td>
-    </tr>
-    </tbody>
-    <tfoot v-if="enableFooter">
-    <tr v-show="colSelectionMode">
-      <td
-        v-for="(header, headerKey) in filteredHeaders"
-        :key="`colSelection${headerKey}`"
-        class="colSelectTD"
-      >
-        <button
-          :class="{
-            toShow: colSelectionMode && !hidingHeaders.includes(header.id),
-            toHide: colSelectionMode && hidingHeaders.includes(header.id),
-            'colSelectButtons': true
-          }"
-          :id="`colSelectionButton${headerKey}`"
-          @click="toggleHeaderDisplay(header.id)"
+            </slot>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+      <tfoot v-if="enableFooter">
+      <tr>
+        <td
+          :colspan="filteredHeaders.length"
         >
-          <i class="fa fa-check"></i>
-          <template v-if="hidingHeaders.includes(header.id)">
-            {{ computedText.columnSelectionDisplayButton }}
-          </template>
-          <template v-else>
-            {{ computedText.columnSelectionDisplayedButton }}
-          </template>
-        </button>
-      </td>
-    </tr>
-    <tr>
-      <td
-        :colspan="filteredHeaders.length"
-      >
-        <button
-          :class="[
-            'colSelectButton',
-            'colSelectButtons'
-          ]"
-          v-if="!colSelectionMode"
-          @click="selectColumns">
-          <i class="colSelectIcon fa fa-cog"></i>
-        </button>
-
-        <template v-else>
-          <span>
-            {{ computedText.columnSelectionHelp }}
-          </span>
-
-          <button
-            class="colSelectButtons colSelectCancelButton"
-            @click="cancelColumnSelection"
+          <span class="align-right"
+                v-if="filteredItems.length === items.length"
           >
-            {{ computedText.columnSelectionCancelButton }}
-          </button>
-          <button
-            class="colSelectButtons colSelectSaveButton"
-            @click="validateColumnSelection"
-          >
-            <i class="fa fa-check"></i>
-            {{ computedText.columnSelectionSaveButton }}
-          </button>
-        </template>
-
-
-        <span class="align-right"
-              v-if="filteredItems.length === items.length"
-        >
           {{ computedText.footerCount }}
         </span>
-        <span class="align-right" v-else>
+          <span class="align-right" v-else>
           {{ computedText.filteredFooterCount }}
         </span>
-      </td>
-    </tr>
-    </tfoot>
-  </table>
+        </td>
+      </tr>
+      </tfoot>
+    </table>
+  </div>
 </template>
 
 <script>
@@ -195,6 +129,10 @@
         type: Boolean,
         default: false,
       },
+      initHeaders: {
+        type: Array,
+        default: () => [],
+      },
       enableFooter: {
         type: Boolean,
         default: false,
@@ -227,10 +165,8 @@
 
           },
         },
-        colSelectionMode: false,
         totalItems: 0,
         totalFilteredItems: 0,
-        hidingHeaders: [],
         hiddenHeadersBuffer: null,
         headerOrderBuffer: null,
         filteredHeaders: [],
@@ -317,7 +253,7 @@
       },
       displayedHeaders() {
         return this.headers.filter((aHeader) => {
-          return this.colSelectionMode || !this.hiddenHeaders.includes(aHeader.id);
+          return !this.hiddenHeaders.includes(aHeader.id);
         });
       },
       headerOrder: {
@@ -335,7 +271,13 @@
       hiddenHeaders: {
         get() {
           if (!this.hiddenHeadersBuffer) {
-            return JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-hidden`)) || [];
+            let headers =  JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-hidden`));
+            if (!headers) {
+              headers = this.headers.filter((aHeader) => {
+                return !this.initHeaders.includes(aHeader.id);
+              }).map(header => header.id);
+            }
+            return headers || [];
           }
           return this.hiddenHeadersBuffer;
         },
@@ -390,27 +332,6 @@
       removeAccents(s) {
         return s.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
       },
-      selectColumns() {
-        this.colSelectionMode = true;
-        this.hidingHeaders = [...this.hiddenHeaders];
-      },
-      cancelColumnSelection() {
-        this.colSelectionMode = false;
-      },
-      validateColumnSelection() {
-        this.hiddenHeaders =  [...this.hidingHeaders];
-
-        this.colSelectionMode = false;
-      },
-      toggleHeaderDisplay(headerId) {
-        if (this.hidingHeaders.includes(headerId)) {
-          // We remove this item from the stack
-          this.$delete(this.hidingHeaders, this.hidingHeaders.findIndex(hidingHeader => hidingHeader === headerId));
-        } else {
-          // We add it
-          this.hidingHeaders.push(headerId);
-        }
-      },
       saveHeadersOrderToCookie() {
         this.headerOrder = this.filteredHeaders.map((header) => {
           return header.id;
@@ -438,7 +359,16 @@
       },
       removeHTML(content) {
         return `${content}`.replace(/(<([^>]+)>)/ig,''); // Remove HTML tags
-      }
+      },
+      selectColumns(colSelection) {
+        const hiddenHeaders = [];
+        this.headers.forEach((aHeader) => {
+          if (!colSelection.includes(aHeader.id)) {
+            hiddenHeaders.push(aHeader.id);
+          }
+        });
+        this.hiddenHeaders = hiddenHeaders;
+      },
     },
   };
 </script>
@@ -528,43 +458,6 @@
     float: right;
   }
 
-  .toShow{
-    background-color: #D5F5E3;
-  }
-
-
-  /* Basic buttons */
-  .colSelectButtons {
-    display: inline-block;
-    border: 1px solid #A6ACAF;
-    outline: none;
-    border-radius: .25rem;
-    padding: .08rem .35rem;
-    background-color:white;
-    color: #A6ACAF;
-  }
-  .colSelectButtons:hover {
-    background-color: white;
-    color:  rgba(0,0,0,.54);
-    border: 1px solid  rgba(0,0,0,.54);
-  }
-
-  .colSelectCancelButton {
-    margin-left:10px;
-  }
-
-  /* setttings buttons */
-  .colSelectButton {
-    color:lightgrey;
-    border:none;
-    margin:1px;
-  }
-  .colSelectButton:hover {
-    color: rgba(0,0,0,.54);
-    border: 1px solid rgba(0,0,0,.54);
-    margin: 0;
-    background-color:white;
-  }
 
   table.scrollable div.tdContent {
     padding: 0;
@@ -574,47 +467,8 @@
     white-space: nowrap;
     overflow: hidden;
   }
-  /* Buttons to show */
-  button.toShow {
-    background-color:white;
-    color:#52BE80;
-    border: 1px solid #52BE80;
-  }
 
-  button.toShow:hover {
-    background-color:white;
-    color:#239B56;
-    border: 1px solid #239B56;
-  }
-
-  /* Basic buttons */
-  button.toHide i {
-    display: none;
-  }
-
-  td.toHide, th.toHide, input.toHide::placeholder{
-    color:#c2cfd6;
-    background-color:white;
-  }
-
-  .textFilter td.toHide {
-    border-top: 2px solid lightgrey;
-    border-bottom: 2px solid lightgrey;
-  }
-  .colSelectSaveButton {
-    background-color:#52BE80;
-    color:white;
-  }
-  .colSelectSaveButton:hover {
-    background-color:#239B56;
-    border: 1px solid #A6ACAF;
-    color:white;
-  }
   tfoot td {
-    background-color: white;
-  }
-  .colSelectTD {
-    text-align:center;
     background-color: white;
   }
 </style>
