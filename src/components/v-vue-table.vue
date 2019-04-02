@@ -273,15 +273,9 @@
           if (!this.hiddenHeadersBuffer) {
             let headers =  JSON.parse(this.$cookie.get(`${this.cookieIdentifier}-hidden`));
             if (!headers) {
-
               headers = this.headers.filter((aHeader) => {
                 return !this.initHeaders.includes(aHeader.id);
-              });
-              
-              if (headers.length === 0) {
-                headers = this.headers;
-              }
-              headers = headers.map(header => header.id);
+              }).map(header => header.id);
             }
             return headers || [];
           }
