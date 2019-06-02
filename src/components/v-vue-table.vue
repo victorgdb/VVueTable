@@ -189,6 +189,10 @@
                 itemToAdd[aHeader.id].text = anItem[aHeader.id].text;
                 itemToAdd[aHeader.id].withoutHTML = this.removeHTML(anItem[aHeader.id].text);
               }
+
+              if (anItem[aHeader.id].sortValue) {
+                itemToAdd[aHeader.id].sortValue = anItem[aHeader.id].sortValue;
+              }
             });
 
             // Make sure all provided variables are kept (for slots)
@@ -205,7 +209,13 @@
           }
 
           Object.keys(this.pagination.textFilters).forEach(headerId => {
-            const searchTerm = this.removeAccents(this.pagination.textFilters[headerId].toLowerCase());
+            let searchTerm = this.removeAccents(this.pagination.textFilters[headerId].toLowerCase());
+            let mustBeginWith = false;
+
+            if (searchTerm[0] === '_') {
+              mustBeginWith = true;
+              searchTerm = searchTerm.substr(1);
+            }
             if (searchTerm.length > 0) {
               // Do we have a special AND/OR character?
               const and = searchTerm.split(',').reduce((acc, term) => {
@@ -233,7 +243,11 @@
                     }
                   })
                 } else {
-                  found = this.removeAccents(item[headerId].withoutHTML.toLowerCase()).indexOf(searchTerm) !== -1;
+                  if (mustBeginWith) {
+                    found = this.removeAccents(item[headerId].withoutHTML.toLowerCase()).indexOf(searchTerm) === 0;
+                  } else {
+                    found = this.removeAccents(item[headerId].withoutHTML.toLowerCase()).indexOf(searchTerm) !== -1;
+                  }
                 }
                 return found;
               });
@@ -339,13 +353,12 @@
       },
       sortFn (a, b) {
         let aValue, bValue;
-
         if (this.pagination.descending) {
-          aValue = a[this.pagination.sortBy].withoutHTML;
-          bValue = b[this.pagination.sortBy].withoutHTML;
+          aValue = a[this.pagination.sortBy].sortValue ? a[this.pagination.sortBy].sortValue : a[this.pagination.sortBy].withoutHTML.toLowerCase();
+          bValue = b[this.pagination.sortBy].sortValue ? b[this.pagination.sortBy].sortValue : b[this.pagination.sortBy].withoutHTML.toLowerCase();
         } else {
-          aValue = b[this.pagination.sortBy].withoutHTML;
-          bValue = a[this.pagination.sortBy].withoutHTML;
+          aValue = b[this.pagination.sortBy].sortValue ? b[this.pagination.sortBy].sortValue : b[this.pagination.sortBy].withoutHTML.toLowerCase();
+          bValue = a[this.pagination.sortBy].sortValue ? a[this.pagination.sortBy].sortValue : a[this.pagination.sortBy].withoutHTML.toLowerCase();
         }
 
         // If we are sorting text
