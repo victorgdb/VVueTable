@@ -188,10 +188,9 @@
               } else {
                 itemToAdd[aHeader.id].text = anItem[aHeader.id].text;
                 itemToAdd[aHeader.id].withoutHTML = this.removeHTML(anItem[aHeader.id].text);
-              }
-
-              if (anItem[aHeader.id].sortValue) {
-                itemToAdd[aHeader.id].sortValue = anItem[aHeader.id].sortValue;
+                if (anItem[aHeader.id].sortValue) {
+                  itemToAdd[aHeader.id].sortValue = anItem[aHeader.id].sortValue;
+                }
               }
             });
 
