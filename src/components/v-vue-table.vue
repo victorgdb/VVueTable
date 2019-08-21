@@ -20,7 +20,7 @@
           'text-align': header.align ? header.align : 'left',
         }"
           @click="sortColumn(header.id)"
-          :title="header.text"
+          :title="removeHTML(header.text)"
         >
           <span v-html="header.text"></span>
         </th>
@@ -57,7 +57,7 @@
           :style="{
           'text-align': item[header.id] && item[header.id].align ? item[header.id].align : 'left',
         }"
-          :title="item[header.id].text"
+          :title="removeHTML(item[header.id].text)"
         >
           <div class="tdContent">
             <slot :header="header" :item="item" :text="item[header.id].text" :withoutHTML="item[header.id].withoutHTML" name="td">
